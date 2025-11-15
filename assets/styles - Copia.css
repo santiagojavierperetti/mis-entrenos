@@ -92,15 +92,6 @@ label {
     position: relative;
 }
 
-.upload-input {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    opacity: 0;
-    pointer-events: none;
-    display: none;
-}
-
 .upload-dropzone {
     display: flex;
     flex-direction: column;
