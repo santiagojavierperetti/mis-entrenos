@@ -1,0 +1,6 @@
+/vendor/
+/uploads/
+/*.fit
+/config.php
+/.DS_Store
+Thumbs.db
