@@ -20,7 +20,7 @@ if (!$pdo instanceof PDO) {
     $dbHost = '127.0.0.1';
     $dbName = 'mis_entrenos';   // <-- cambialo si usás otro nombre
     $dbUser = 'root';
-    $dbPass = 'Falcon-1984';
+    $dbPass = '';
 
     try {
         $pdo = new PDO(
