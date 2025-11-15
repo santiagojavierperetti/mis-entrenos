@@ -76,30 +76,60 @@ label {
     margin-bottom: 0.5rem;
 }
 
-input[type="file"] {
-    width: 100%;
-    padding: 0.75rem;
-    border-radius: 12px;
-    border: 1px dashed var(--border);
-    background: rgba(37, 99, 235, 0.04);
-    transition: border-color 0.2s ease, background 0.2s ease;
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.upload-area {
+    position: relative;
+}
+
+.upload-dropzone {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: clamp(1.75rem, 4vw, 2.25rem);
+    border-radius: 16px;
+    border: 2px dashed rgba(37, 99, 235, 0.35);
+    background: rgba(37, 99, 235, 0.08);
+    color: var(--text);
+    transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
     cursor: pointer;
 }
 
-input[type="file"]:focus-visible {
-    outline: 3px solid rgba(37, 99, 235, 0.3);
+.upload-dropzone:hover,
+.upload-dropzone:focus-visible,
+.upload-dropzone--dragging {
     border-color: var(--primary);
+    background: rgba(37, 99, 235, 0.12);
+    transform: translateY(-1px);
 }
 
-input[type="file"]::file-selector-button {
-    background: var(--primary);
-    color: white;
-    border: none;
-    padding: 0.5rem 1rem;
-    margin-right: 1rem;
-    border-radius: 999px;
+.upload-dropzone--has-file {
+    border-color: rgba(21, 128, 61, 0.35);
+    background: rgba(21, 128, 61, 0.12);
+}
+
+.dropzone-title {
+    font-size: 1.1rem;
     font-weight: 600;
-    cursor: pointer;
+}
+
+.dropzone-subtitle,
+.dropzone-selected {
+    font-size: 0.95rem;
+    color: var(--muted);
 }
 
 button,
@@ -179,10 +209,31 @@ button:focus-visible,
     background: rgba(185, 28, 28, 0.12);
     border-color: rgba(185, 28, 28, 0.25);
     color: var(--error);
-
 }
 
 @media (prefers-color-scheme: dark) {
+    .upload-dropzone {
+        border-color: rgba(147, 197, 253, 0.4);
+        background: rgba(147, 197, 253, 0.08);
+        color: var(--text-dark);
+    }
+
+    .upload-dropzone:hover,
+    .upload-dropzone:focus-visible,
+    .upload-dropzone--dragging {
+        background: rgba(147, 197, 253, 0.12);
+    }
+
+    .upload-dropzone--has-file {
+        border-color: rgba(134, 239, 172, 0.45);
+        background: rgba(134, 239, 172, 0.12);
+    }
+
+    .dropzone-subtitle,
+    .dropzone-selected {
+        color: var(--muted-dark);
+    }
+
     .alert--success {
         background: rgba(134, 239, 172, 0.1);
         border-color: rgba(134, 239, 172, 0.35);
@@ -208,78 +259,49 @@ button:focus-visible,
     }
 }
 
-.details {
-    margin: 1.5rem 0 0;
-    padding: 0;
-}
-
-.details dt {
-    font-weight: 600;
-    margin-top: 1rem;
-}
-
-.details dd {
-    margin: 0.25rem 0 0;
-    color: inherit;
-    word-break: break-word;
-}
-
 .actions {
-    margin-top: 2rem;
     display: flex;
+    gap: 1rem;
     flex-wrap: wrap;
-    gap: 0.75rem;
-}
-
-small {
-    color: var(--muted);
-}
-
-hr {
-    border: none;
-    border-top: 1px solid rgba(148, 163, 184, 0.2);
-    margin: 2rem 0;
-}
-
-footer {
-    margin-top: 2.5rem;
-    font-size: 0.85rem;
-    text-align: center;
-    color: var(--muted);
+    margin: 1.5rem 0 0;
 }
 
 .card-list {
-    margin: 1.75rem 0 0;
-    padding: 0;
     list-style: none;
+    margin: 0;
+    padding: 0;
     display: grid;
-    gap: 1rem;
+    gap: 1.25rem;
 }
 
 .card-list li {
-    border-radius: 12px;
-    border: 1px solid rgba(148, 163, 184, 0.2);
+    background: rgba(37, 99, 235, 0.06);
+    border-radius: 14px;
     padding: 1rem 1.25rem;
-    background: rgba(148, 163, 184, 0.08);
+    border: 1px solid rgba(37, 99, 235, 0.12);
 }
 
-.card-list strong {
+.card-list li strong {
     display: block;
-    font-weight: 600;
-    margin-bottom: 0.25rem;
+    color: var(--primary);
+    margin-bottom: 0.4rem;
 }
 
-@media (max-width: 600px) {
+footer {
+    margin-top: 2rem;
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--muted);
+}
+
+@media (max-width: 520px) {
     main,
     .section-card {
         padding: 1.5rem;
     }
 
-    body {
-        padding: 1.5rem;
-    }
-
-    .actions {
-        justify-content: center;
+    button,
+    .button-link {
+        width: 100%;
     }
 }
