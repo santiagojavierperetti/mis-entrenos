@@ -19,12 +19,12 @@
 <h1>Subir archivo .fit</h1>
     <form id="upload-form" class="section-card" action="procesar.php" method="post" enctype="multipart/form-data" novalidate>
         <div class="upload-area">
-            <input id="archivo" class="visually-hidden" type="file" name="archivo" accept=".fit,application/octet-stream" required data-max-size="20971520">
-            <label class="upload-dropzone" for="archivo" tabindex="0">
+            <input id="archivo" class="upload-input" type="file" name="archivo" accept=".fit,application/octet-stream" required data-max-size="20971520" hidden aria-hidden="true">
+            <div class="upload-dropzone" role="button" tabindex="0" aria-controls="archivo" aria-describedby="selected-file">
                 <span class="dropzone-title">Seleccioná un archivo FIT</span>
                 <span class="dropzone-subtitle">Arrastrá y soltá o hacé clic para elegirlo desde tu dispositivo.</span>
                 <span id="selected-file" class="dropzone-selected" data-default="Todavía no seleccionaste ningún archivo.">Todavía no seleccionaste ningún archivo.</span>
-            </label>
+            </div>
         </div>
         <p class="form-hint">
             Aceptamos únicamente archivos con extensión <code>.fit</code>. Si necesitás ayuda para preparar tu base de datos, consultá el README del proyecto.
@@ -127,6 +127,11 @@
     fileInput.addEventListener('change', () => {
         showError('');
         updateSelectedFile();
+    });
+
+    dropzone.addEventListener('click', (event) => {
+        event.preventDefault();
+        fileInput.click();
     });
 
     ;['dragenter', 'dragover'].forEach((eventName) => {
