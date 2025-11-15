@@ -29,7 +29,7 @@ function renderPage(string $state, string $title, string $message, array $detail
     http_response_code($httpCode);
     header('Content-Type: text/html; charset=UTF-8');
 
-    $safeTitle = htmlspecialchars($title, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    $safeTitle   = htmlspecialchars($title,   ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     $safeMessage = nl2br(htmlspecialchars($message, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
 
     echo "<!DOCTYPE html>\n";
@@ -50,8 +50,8 @@ function renderPage(string $state, string $title, string $message, array $detail
     if ($details) {
         echo '    <dl class="details">';
         foreach ($details as $label => $value) {
-            $safeLabel = htmlspecialchars((string) $label, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-            $safeValue = htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+            $safeLabel = htmlspecialchars((string)$label, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+            $safeValue = htmlspecialchars((string)$value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
             echo '        <dt>' . $safeLabel . '</dt>';
             echo '        <dd>' . $safeValue . '</dd>';
         }
@@ -87,11 +87,8 @@ function formatBytes(int $bytes): string
 
 /* ============================================================
    1) CONEXIÓN PDO
-   - Si existe config.php (que define $pdo), lo usa.
-   - Si no existe o no define $pdo, conecta con valores por defecto
-     de XAMPP: root sin contraseña, DB 'mis_entrenos'.
    ============================================================ */
-$pdo = null;
+$pdo        = null;
 $configPath = __DIR__ . '/config.php';
 if (file_exists($configPath)) {
     require $configPath; // se espera que defina $pdo
@@ -114,8 +111,6 @@ if (!$pdo instanceof PDO) {
             ]
         );
     } catch (Throwable $e) {
-        http_response_code(500);
-        exit('No puedo conectar a la base de datos: ' . $e->getMessage());
         respondError('No puedo conectar a la base de datos: ' . $e->getMessage(), 500, 'Error de base de datos');
     }
 }
@@ -124,17 +119,13 @@ if (!$pdo instanceof PDO) {
    2) VALIDAR SUBIDA
    ============================================================ */
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    exit('Método no permitido.');
     respondError('Este endpoint sólo acepta solicitudes POST.', 405, 'Método no permitido');
 }
 
 if (!isset($_FILES['archivo'])) {
-    exit('No se recibió ningún archivo.');
     respondError('No se recibió ningún archivo para procesar.');
 }
 
-$err = $_FILES['archivo']['error'];
 $err = $_FILES['archivo']['error'] ?? UPLOAD_ERR_NO_FILE;
 if ($err !== UPLOAD_ERR_OK) {
     $map = [
@@ -142,17 +133,14 @@ if ($err !== UPLOAD_ERR_OK) {
         UPLOAD_ERR_FORM_SIZE  => 'El archivo excede MAX_FILE_SIZE del formulario.',
         UPLOAD_ERR_PARTIAL    => 'El archivo se subió parcialmente.',
         UPLOAD_ERR_NO_FILE    => 'No se subió ningún archivo.',
-        UPLOAD_ERR_NO_TMP_DIR => 'Falta la carpeta temporal.',
-        UPLOAD_ERR_CANT_WRITE => 'No se pudo escribir en disco.',
         UPLOAD_ERR_NO_TMP_DIR => 'Falta la carpeta temporal en el servidor.',
         UPLOAD_ERR_CANT_WRITE => 'No se pudo escribir el archivo en disco.',
         UPLOAD_ERR_EXTENSION  => 'Una extensión de PHP detuvo la subida.',
     ];
-    exit('Error al subir el archivo: ' . ($map[$err] ?? ('código ' . $err)));
     respondError('Error al subir el archivo: ' . ($map[$err] ?? ('código ' . $err)));
 }
 
-$original = $_FILES['archivo']['name'] ?? 'sin_nombre.fit';
+$original = $_FILES['archivo']['name']     ?? 'sin_nombre.fit';
 $tmp      = $_FILES['archivo']['tmp_name'] ?? '';
 $size     = (int)($_FILES['archivo']['size'] ?? 0);
 
@@ -160,24 +148,20 @@ $size     = (int)($_FILES['archivo']['size'] ?? 0);
    3) VALIDACIONES BÁSICAS DEL ARCHIVO
    ============================================================ */
 if (!is_uploaded_file($tmp)) {
-    exit('El archivo temporal no es válido.');
     respondError('El archivo recibido no es válido. Intentá nuevamente.');
 }
 
 $ext = strtolower(pathinfo($original, PATHINFO_EXTENSION));
 if ($ext !== 'fit') {
-    exit('Sólo se permiten archivos .fit');
     respondError('Sólo se permiten archivos con extensión .fit');
 }
 
-// El tipo MIME de los .fit suele ser "application/octet-stream".
-// Igual lo tomamos informativo (no confiable), pero lo guardamos.
+// El tipo MIME de los .fit suele ser "application/octet-stream" (lo guardamos informativo)
 $mime = @mime_content_type($tmp) ?: 'application/octet-stream';
 
-// (Opcional) límite de tamaño, por ejemplo 20 MB:
+// Límite de tamaño: 20 MB
 $MAX_MB = 20;
 if ($size <= 0 || $size > $MAX_MB * 1024 * 1024) {
-    exit('Tamaño inválido. Máximo permitido: ' . $MAX_MB . ' MB');
     respondError('Tamaño inválido. El máximo permitido es de ' . $MAX_MB . ' MB.');
 }
 
@@ -188,26 +172,22 @@ $md5  = md5_file($tmp);
 $sha1 = sha1_file($tmp);
 
 try {
-    $stmt = $pdo->prepare("SELECT id FROM fit_files WHERE md5_hash = ?");
     $stmt = $pdo->prepare('SELECT id FROM fit_files WHERE md5_hash = ?');
     $stmt->execute([$md5]);
     $existente = $stmt->fetchColumn();
+
     if ($existente) {
-        echo "Este archivo ya estaba subido (ID {$existente}).";
-        echo '<br><a href="index.php">Volver</a>';
-        exit;
         renderPage(
             'warning',
             'El archivo ya existe',
             'Encontramos un registro previo con el mismo contenido. No se creó un duplicado.',
             [
                 'ID ya registrado' => '#' . $existente,
-                'Nombre original' => $original,
+                'Nombre original'  => $original,
             ]
         );
     }
 } catch (Throwable $e) {
-    exit('Error al verificar duplicados: ' . $e->getMessage());
     respondError('Error al verificar duplicados: ' . $e->getMessage(), 500, 'Error al verificar duplicados');
 }
 
@@ -217,20 +197,16 @@ try {
 $uploadsDir = __DIR__ . '/uploads';
 if (!is_dir($uploadsDir)) {
     if (!mkdir($uploadsDir, 0777, true) && !is_dir($uploadsDir)) {
-        exit('No pude crear la carpeta /uploads');
         respondError('No se pudo crear la carpeta /uploads en el servidor.', 500, 'Error en el servidor');
     }
 }
 
 // Nombre único para guardar el archivo
 $stored  = date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '.fit';
-$destAbs = $uploadsDir . '/' . $stored;         // ruta absoluta
-$destRel = 'uploads/' . $stored;                 // ruta relativa para guardar en BD
-$destAbs = $uploadsDir . '/' . $stored;
-$destRel = 'uploads/' . $stored;
+$destAbs = $uploadsDir . '/' . $stored;   // ruta absoluta
+$destRel = 'uploads/' . $stored;          // ruta relativa para guardar en BD
 
 if (!move_uploaded_file($tmp, $destAbs)) {
-    exit('No se pudo mover el archivo a /uploads.');
     respondError('No se pudo mover el archivo a la carpeta uploads.', 500, 'Error al guardar el archivo');
 }
 
@@ -238,13 +214,11 @@ if (!move_uploaded_file($tmp, $destAbs)) {
    6) GUARDAR EN BD
    ============================================================ */
 try {
-    $stmt = $pdo->prepare("
     $stmt = $pdo->prepare('
         INSERT INTO fit_files (
             original_name, stored_name, path, size_bytes,
             mime_type, md5_hash, sha1_hash
         ) VALUES (?, ?, ?, ?, ?, ?, ?)
-    ");
     ');
     $stmt->execute([
         $original,
@@ -253,7 +227,6 @@ try {
         $size,
         $mime,
         $md5,
-        $sha1
         $sha1,
     ]);
 
@@ -261,22 +234,12 @@ try {
 } catch (Throwable $e) {
     // Si falla el insert, borramos el archivo físico para no dejar basura
     @unlink($destAbs);
-    exit('Error al guardar en la BD: ' . $e->getMessage());
     respondError('Error al guardar el archivo en la base de datos: ' . $e->getMessage(), 500, 'Error en la base de datos');
 }
 
 /* ============================================================
-   7) RESPUESTA SIMPLE
    7) RESPUESTA
    ============================================================ */
-echo "Archivo recibido y guardado correctamente.<br>";
-echo "ID en la base: <strong>{$fitId}</strong><br>";
-echo "Nombre original: {$original}<br>";
-echo "Guardado como: {$destRel}<br>";
-echo "Tamaño: {$size} bytes<br>";
-echo "MD5: {$md5}<br>";
-echo "SHA1: {$sha1}<br><br>";
-echo '<a href="index.php">Volver y subir otro</a>';
 renderPage(
     'success',
     'Entrenamiento guardado',

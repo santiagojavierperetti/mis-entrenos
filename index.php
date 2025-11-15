@@ -16,14 +16,19 @@
         </p>
     </header>
 
-<h1>Subir archivo .fit</h1>
     <form id="upload-form" class="section-card" action="procesar.php" method="post" enctype="multipart/form-data" novalidate>
         <div class="upload-area">
-            <input id="archivo" class="upload-input" type="file" name="archivo" accept=".fit,application/octet-stream" required data-max-size="20971520" aria-hidden="true">
-            <div class="upload-dropzone" role="button" tabindex="0" aria-controls="archivo" aria-describedby="selected-file">
+            <input id="archivo" class="upload-input" type="file" name="archivo"
+                   accept=".fit,application/octet-stream"
+                   required data-max-size="20971520" aria-hidden="true">
+            <div class="upload-dropzone" role="button" tabindex="0"
+                 aria-controls="archivo" aria-describedby="selected-file">
                 <span class="dropzone-title">Seleccioná un archivo FIT</span>
                 <span class="dropzone-subtitle">Arrastrá y soltá o hacé clic para elegirlo desde tu dispositivo.</span>
-                <span id="selected-file" class="dropzone-selected" data-default="Todavía no seleccionaste ningún archivo.">Todavía no seleccionaste ningún archivo.</span>
+                <span id="selected-file" class="dropzone-selected"
+                      data-default="Todavía no seleccionaste ningún archivo.">
+                    Todavía no seleccionaste ningún archivo.
+                </span>
             </div>
         </div>
         <p class="form-hint">
@@ -36,12 +41,6 @@
         <small>Los archivos se almacenan de forma privada y se registran hashes MD5/SHA1 para evitar duplicados.</small>
     </form>
 
-<form action="procesar.php" method="post" enctype="multipart/form-data">
-    <label>Seleccionar archivo FIT:</label><br>
-    <input type="file" name="archivo" accept=".fit" required>
-    <br><br>
-    <button type="submit">Subir entrenamiento</button>
-</form>
     <section class="section-card" aria-labelledby="pasos-titulo">
         <h2 id="pasos-titulo">¿Qué sucede después?</h2>
         <ul class="card-list">
