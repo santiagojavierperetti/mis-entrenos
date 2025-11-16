@@ -9,13 +9,12 @@
 </head>
 <body>
 
-<!-- BARRA TIPO APP -->
 <header class="app-bar">
     <div class="app-bar__inner">
         <div class="app-bar__brand">
             <span class="app-bar__logo">🚴‍♂️</span>
             <div>
-                <div class="app-bar__title">Ride Sport Performance Lab</div>
+                <div class="app-bar__title">Mis entrenos .FIT</div>
                 <div class="app-bar__subtitle">Carga y gestión de actividades</div>
             </div>
         </div>
@@ -23,86 +22,70 @@
 </header>
 
 <main>
-
-    <!-- HEADER DEL MAIN -->
     <header class="page-header">
         <h1>Subí tu entrenamiento .FIT</h1>
-        <p>Arrastrá y soltá tu archivo o elegilo manualmente desde tu dispositivo.</p>
+        <p>
+            Podés arrastrar y soltar el archivo desde tu computadora
+            o seleccionarlo manualmente.
+        </p>
     </header>
 
-    <!-- FORMULARIO DE SUBIDA -->
     <form id="upload-form" class="section-card" action="procesar.php"
           method="post" enctype="multipart/form-data" novalidate>
-
         <div class="upload-area">
             <input id="archivo" class="upload-input" type="file" name="archivo"
                    accept=".fit,application/octet-stream"
                    required data-max-size="20971520" aria-hidden="true">
-
             <div class="upload-dropzone" role="button" tabindex="0"
                  aria-controls="archivo" aria-describedby="selected-file">
-
                 <span class="dropzone-title">Seleccioná un archivo FIT</span>
-
                 <span class="dropzone-subtitle">
-                    Arrastrá y soltá aquí o hacé clic para buscarlo.
+                    Arrastrá y soltá o hacé clic para elegirlo desde tu dispositivo.
                 </span>
-
                 <span id="selected-file" class="dropzone-selected"
                       data-default="Todavía no seleccionaste ningún archivo.">
                     Todavía no seleccionaste ningún archivo.
                 </span>
             </div>
         </div>
-
         <p class="form-hint">
-            Se aceptan archivos con extensión <code>.fit</code> de hasta <strong>20 MB</strong>.
+            Aceptamos únicamente archivos con extensión <code>.fit</code>
+            de hasta <strong>20&nbsp;MB</strong>.
         </p>
-
-        <p id="client-error" class="form-hint alert alert--error"
-           role="alert" hidden></p>
-
+        <p id="client-error" class="form-hint alert alert--error" role="alert" hidden></p>
         <div class="actions">
             <button type="submit">Subir entrenamiento</button>
-            <a class="button-link" href="listado.php">Ver entrenamientos cargados</a>
         </div>
-
         <small>
-            Guardamos el archivo de forma privada y registramos hashes MD5/SHA1
+            Los archivos se almacenan de forma privada y se registran hashes MD5/SHA1
             para evitar duplicados.
         </small>
-
     </form>
 
-    <!-- SECCIÓN EXPLICATIVA -->
     <section class="section-card" aria-labelledby="pasos-titulo">
         <h2 id="pasos-titulo">¿Qué sucede después?</h2>
-
         <ul class="card-list">
             <li>
                 <strong>Validación inmediata</strong>
                 Revisamos tamaño, extensión y procedencia del archivo.
             </li>
-
             <li>
                 <strong>Verificación de duplicados</strong>
-                Comparamos el hash con la base de datos para evitar archivos repetidos.
+                Comparamos los hashes con la base de datos para no repetir actividades.
             </li>
-
             <li>
-                <strong>Registro</strong>
-                Guardamos metadatos para que puedas ver y descargar tus entrenos.
+                <strong>Registro en la base</strong>
+                Guardamos los metadatos para análisis posteriores.
             </li>
         </ul>
     </section>
 
     <footer>
-        ¿Necesitás ayuda configurando la base? Revisá el README incluido.
+        ¿Necesitás ayuda para configurar la base de datos?
+        Revisá el README incluido en el proyecto.
     </footer>
-
 </main>
 
-<!-- JS PARA DRAG & DROP -->
 <script>
 (() => {
     const form = document.getElementById('upload-form');
@@ -142,6 +125,7 @@
         if (!file) {
             event.preventDefault();
             showError('Seleccioná un archivo antes de continuar.');
+            fileInput.focus();
             return;
         }
 
@@ -149,6 +133,7 @@
         if (!lowerName.endsWith('.fit')) {
             event.preventDefault();
             showError('El archivo debe tener extensión .fit.');
+            fileInput.focus();
             return;
         }
 
@@ -156,6 +141,7 @@
             event.preventDefault();
             const maxMB = (maxBytes / (1024 * 1024)).toFixed(0);
             showError(`El archivo supera el máximo permitido de ${maxMB} MB.`);
+            fileInput.focus();
         }
     });
 
@@ -169,15 +155,15 @@
         fileInput.click();
     });
 
-    ['dragenter', 'dragover'].forEach(evt => {
-        dropzone.addEventListener(evt, (event) => {
+    ['dragenter', 'dragover'].forEach((eventName) => {
+        dropzone.addEventListener(eventName, (event) => {
             event.preventDefault();
             dropzone.classList.add('upload-dropzone--dragging');
         });
     });
 
-    ['dragleave', 'dragend', 'drop'].forEach(evt => {
-        dropzone.addEventListener(evt, (event) => {
+    ['dragleave', 'dragend', 'drop'].forEach((eventName) => {
+        dropzone.addEventListener(eventName, (event) => {
             event.preventDefault();
             dropzone.classList.remove('upload-dropzone--dragging');
         });
@@ -185,7 +171,7 @@
 
     dropzone.addEventListener('drop', (event) => {
         const files = event.dataTransfer?.files;
-        if (files && files.length > 0) {
+        if (files && files.length) {
             fileInput.files = files;
             updateSelectedFile();
         }
@@ -199,6 +185,5 @@
     });
 })();
 </script>
-
 </body>
 </html>

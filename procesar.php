@@ -5,9 +5,7 @@ ini_set('display_errors', '1');
 error_reporting(E_ALL);
 
 /**
- * Renderiza una respuesta HTML amigable y finaliza el script.
- *
- * @param 'success'|'error'|'warning'|'info' $state
+ * Renderiza una página HTML con estilo unificado + app bar.
  */
 function renderPage(string $state, string $title, string $message, array $details = [], int $httpCode = 200): void
 {
@@ -29,7 +27,7 @@ function renderPage(string $state, string $title, string $message, array $detail
     http_response_code($httpCode);
     header('Content-Type: text/html; charset=UTF-8');
 
-    $safeTitle   = htmlspecialchars($title,   ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    $safeTitle   = htmlspecialchars($title, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     $safeMessage = nl2br(htmlspecialchars($message, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
 
     echo "<!DOCTYPE html>\n";
@@ -39,29 +37,48 @@ function renderPage(string $state, string $title, string $message, array $detail
     echo '    <meta name="viewport" content="width=device-width, initial-scale=1">';
     echo '    <title>' . $safeTitle . '</title>';
     echo '    <link rel="stylesheet" href="assets/styles.css">';
-	echo '    <link rel="icon" type="image/png" href="assets/favicon.png">';
+    echo '    <link rel="icon" type="image/png" href="assets/favicon.png">';
     echo '</head>';
     echo '<body>';
-    echo '<main class="section-card">';
-    echo '    <h1>' . $safeTitle . '</h1>';
-    echo '    <div class="alert ' . $stateClass . '">';
-    echo '        <p>' . $safeMessage . '</p>';
-    echo '    </div>';
 
-    if ($details) {
-        echo '    <dl class="details">';
+    // ---------------------------------------------
+    // APP BAR (igual al index.php)
+    // ---------------------------------------------
+    echo '<header class="app-bar">';
+    echo '  <div class="app-bar__inner">';
+    echo '      <div class="app-bar__brand">';
+    echo '          <span class="app-bar__logo">🚴‍♂️</span>';
+    echo '          <div>';
+    echo '              <div class="app-bar__title">Mis entrenos .FIT</div>';
+    echo '              <div class="app-bar__subtitle">Carga y gestión de actividades</div>';
+    echo '          </div>';
+    echo '      </div>';
+    echo '  </div>';
+    echo '</header>';
+
+    // ---------------------------------------------
+
+    echo '<main class="section-card">';
+    echo '  <h1>' . $safeTitle . '</h1>';
+    echo '  <div class="alert ' . $stateClass . '">';
+    echo '      <p>' . $safeMessage . '</p>';
+    echo '  </div>';
+
+    if (!empty($details)) {
+        echo '  <dl class="details">';
         foreach ($details as $label => $value) {
             $safeLabel = htmlspecialchars((string)$label, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
             $safeValue = htmlspecialchars((string)$value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-            echo '        <dt>' . $safeLabel . '</dt>';
-            echo '        <dd>' . $safeValue . '</dd>';
+            echo '      <dt>' . $safeLabel . '</dt>';
+            echo '      <dd>' . $safeValue . '</dd>';
         }
-        echo '    </dl>';
+        echo '  </dl>';
     }
 
-    echo '    <div class="actions">';
-    echo '        <a class="button-link" href="index.php">Volver al formulario</a>';
-    echo '    </div>';
+    echo '  <div class="actions">';
+    echo '      <a class="button-link" href="index.php">Volver al formulario</a>';
+    echo '  </div>';
+
     echo '</main>';
     echo '</body>';
     echo '</html>';
@@ -82,24 +99,25 @@ function formatBytes(int $bytes): string
         $value /= 1024;
         $i++;
     }
-
     return sprintf('%s %s', $i === 0 ? $value : number_format($value, 2), $units[$i]);
 }
 
 /* ============================================================
    1) CONEXIÓN PDO
    ============================================================ */
-$pdo        = null;
+
+$pdo = null;
 $configPath = __DIR__ . '/config.php';
+
 if (file_exists($configPath)) {
-    require $configPath; // se espera que defina $pdo
+    require $configPath;
 }
 
 if (!$pdo instanceof PDO) {
     $dbHost = '127.0.0.1';
-    $dbName = 'mis_entrenos';   // <-- cambialo si usás otro nombre
+    $dbName = 'mis_entrenos';
     $dbUser = 'root';
-    $dbPass = 'Falcon-1984';
+    $dbPass = 'Falcon-1984'; // tu pass
 
     try {
         $pdo = new PDO(
@@ -117,8 +135,9 @@ if (!$pdo instanceof PDO) {
 }
 
 /* ============================================================
-   2) VALIDAR SUBIDA
+   2) VALIDAR MÉTODO Y ARCHIVO
    ============================================================ */
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     respondError('Este endpoint sólo acepta solicitudes POST.', 405, 'Método no permitido');
 }
@@ -128,26 +147,28 @@ if (!isset($_FILES['archivo'])) {
 }
 
 $err = $_FILES['archivo']['error'] ?? UPLOAD_ERR_NO_FILE;
+
 if ($err !== UPLOAD_ERR_OK) {
     $map = [
         UPLOAD_ERR_INI_SIZE   => 'El archivo excede upload_max_filesize en php.ini.',
         UPLOAD_ERR_FORM_SIZE  => 'El archivo excede MAX_FILE_SIZE del formulario.',
         UPLOAD_ERR_PARTIAL    => 'El archivo se subió parcialmente.',
         UPLOAD_ERR_NO_FILE    => 'No se subió ningún archivo.',
-        UPLOAD_ERR_NO_TMP_DIR => 'Falta la carpeta temporal en el servidor.',
+        UPLOAD_ERR_NO_TMP_DIR => 'Falta la carpeta temporal.',
         UPLOAD_ERR_CANT_WRITE => 'No se pudo escribir el archivo en disco.',
         UPLOAD_ERR_EXTENSION  => 'Una extensión de PHP detuvo la subida.',
     ];
-    respondError('Error al subir el archivo: ' . ($map[$err] ?? ('código ' . $err)));
+    respondError('Error al subir el archivo: ' . ($map[$err] ?? 'Código ' . $err));
 }
 
-$original = $_FILES['archivo']['name']     ?? 'sin_nombre.fit';
+$original = $_FILES['archivo']['name'] ?? 'sin_nombre.fit';
 $tmp      = $_FILES['archivo']['tmp_name'] ?? '';
 $size     = (int)($_FILES['archivo']['size'] ?? 0);
 
 /* ============================================================
-   3) VALIDACIONES BÁSICAS DEL ARCHIVO
+   3) VALIDACIONES DEL ARCHIVO
    ============================================================ */
+
 if (!is_uploaded_file($tmp)) {
     respondError('El archivo recibido no es válido. Intentá nuevamente.');
 }
@@ -157,10 +178,8 @@ if ($ext !== 'fit') {
     respondError('Sólo se permiten archivos con extensión .fit');
 }
 
-// El tipo MIME de los .fit suele ser "application/octet-stream" (lo guardamos informativo)
 $mime = @mime_content_type($tmp) ?: 'application/octet-stream';
 
-// Límite de tamaño: 20 MB
 $MAX_MB = 20;
 if ($size <= 0 || $size > $MAX_MB * 1024 * 1024) {
     respondError('Tamaño inválido. El máximo permitido es de ' . $MAX_MB . ' MB.');
@@ -169,6 +188,7 @@ if ($size <= 0 || $size > $MAX_MB * 1024 * 1024) {
 /* ============================================================
    4) EVITAR DUPLICADOS
    ============================================================ */
+
 $md5  = md5_file($tmp);
 $sha1 = sha1_file($tmp);
 
@@ -193,34 +213,37 @@ try {
 }
 
 /* ============================================================
-   5) MOVER A /uploads (crear si no existe)
+   5) MOVER A /uploads
    ============================================================ */
+
 $uploadsDir = __DIR__ . '/uploads';
+
 if (!is_dir($uploadsDir)) {
-    if (!mkdir($uploadsDir, 0777, true) && !is_dir($uploadsDir)) {
-        respondError('No se pudo crear la carpeta /uploads en el servidor.', 500, 'Error en el servidor');
+    if (!mkdir($uploadsDir, 0777, true)) {
+        respondError('No se pudo crear la carpeta /uploads.', 500, 'Error en el servidor');
     }
 }
 
-// Nombre único para guardar el archivo
 $stored  = date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '.fit';
-$destAbs = $uploadsDir . '/' . $stored;   // ruta absoluta
-$destRel = 'uploads/' . $stored;          // ruta relativa para guardar en BD
+$destAbs = $uploadsDir . '/' . $stored;
+$destRel = 'uploads/' . $stored;
 
 if (!move_uploaded_file($tmp, $destAbs)) {
-    respondError('No se pudo mover el archivo a la carpeta uploads.', 500, 'Error al guardar el archivo');
+    respondError('No se pudo mover el archivo a /uploads.', 500, 'Error al guardar archivo');
 }
 
 /* ============================================================
    6) GUARDAR EN BD
    ============================================================ */
+
 try {
     $stmt = $pdo->prepare('
         INSERT INTO fit_files (
-            original_name, stored_name, path, size_bytes,
-            mime_type, md5_hash, sha1_hash
+            original_name, stored_name, path,
+            size_bytes, mime_type, md5_hash, sha1_hash
         ) VALUES (?, ?, ?, ?, ?, ?, ?)
     ');
+
     $stmt->execute([
         $original,
         $stored,
@@ -233,14 +256,14 @@ try {
 
     $fitId = $pdo->lastInsertId();
 } catch (Throwable $e) {
-    // Si falla el insert, borramos el archivo físico para no dejar basura
     @unlink($destAbs);
-    respondError('Error al guardar el archivo en la base de datos: ' . $e->getMessage(), 500, 'Error en la base de datos');
+    respondError('Error al guardar en la base de datos: ' . $e->getMessage(), 500, 'Error en la base de datos');
 }
 
 /* ============================================================
    7) RESPUESTA
    ============================================================ */
+
 renderPage(
     'success',
     'Entrenamiento guardado',
